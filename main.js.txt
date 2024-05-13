@@ -1,0 +1,43 @@
+const express = require('express');
+const { createCanvas } = require('canvas');
+
+const app = express();
+
+// Función para formatear un número a dos dígitos (por ejemplo, 5 -> "05")
+const formatNumber = (num) => {
+  return num < 10 ? `0${num}` : `${num}`;
+};
+
+// Ruta para generar la imagen del contador
+app.get('/countdown-image', (req, res) => {
+  // Recibe la fecha de vencimiento desde la consulta (por ejemplo, expirationDate=2024-12-31T23:59:59)
+  const expirationDate = new Date(req.query.expirationDate);
+
+  // Calcula el tiempo restante en milisegundos
+  const now = new Date();
+  const timeLeft = expirationDate.getTime() - now.getTime();
+
+  // Calcula los días, horas, minutos y segundos restantes
+  const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
+  const seconds = Math.floor((timeLeft / 1000) % 60);
+
+  // Crea una imagen dinámica utilizando la biblioteca Canvas
+  const canvas = createCanvas(400, 200);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#000000';
+  ctx.font = '20px Arial';
+  ctx.fillText(`Countdown: ${days} days ${formatNumber(hours)}:${formatNumber(minutes)}:${formatNumber(seconds)}`, 50, 100);
+
+  // Envía la imagen generada como respuesta
+  res.set('Content-Type', 'image/png');
+  canvas.createPNGStream().pipe(res);
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
