@@ -20,6 +20,10 @@ app.get("/", async (req, res) => {
     res.status(200).send("Hola mundo")
 });
 
+app.get("/ping", async (req, res) => {
+    res.send("pong!")
+})
+
 // Ruta para generar y servir el GIF animado
 app.get('/generar-gif', async (req, res) => {
     try {
