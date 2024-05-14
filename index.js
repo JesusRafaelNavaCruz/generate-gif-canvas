@@ -52,7 +52,7 @@ app.get('/generar-gif', async (req, res) => {
     }
 });
 
-app.get("/images", async () => {
+app.get("/images", async (req, res) => {
     res.status(200).send({"message": "Successfully"})
 })
 
