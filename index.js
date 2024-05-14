@@ -6,6 +6,8 @@ require('dotenv').config();
 
 const app = express();
 
+app.use(express.static("public"))
+
 AWS.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -15,21 +17,7 @@ AWS.config.update({
 const s3 = new AWS.S3();
 
 app.get("/", async (req, res) => {
-    const htmlResponse = `
-    <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viva Aerobus</title>
-</head>
-<body>
-    <h1>Email CountDown for Email Viva Aerobus</h1>
-    <small>Created by Jesus Rafael Nava Cruz</small>
-</body>
-</html>
-    `
-    res.status(200).send(htmlResponse)
+    res.status(200).send("Hola mundo")
 });
 
 // Ruta para generar y servir el GIF animado
@@ -51,6 +39,7 @@ app.get('/generar-gif', async (req, res) => {
         const uploadResult = await s3.upload(uploadParams).promise();
 
         const gifUrl = uploadResult.Location;
+        console.log(gifUrl);
 
         res.set('Content-Type', 'image/gif');
         // res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
