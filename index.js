@@ -52,6 +52,10 @@ app.get('/generar-gif', async (req, res) => {
     }
 });
 
+app.get("/images", async () => {
+    res.status(200).send({"message": "Successfully"})
+})
+
 // Puerto en el que escucha el servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
