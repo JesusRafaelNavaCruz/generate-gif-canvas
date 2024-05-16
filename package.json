@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node api/index.js",
-    "dev": "nodemon api/index.js",
-    "build": "./setup.sh && npm run dev"
+    "dev": "nodemon api/index.js"
   },
   "author": "Jesus Rafael Nava Cruz",
   "license": "ISC",
