@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.1619.0",
-    "canvas": "^2.11.2",
+    "canvas": "^2.6.1",
     "express": "^4.19.2",
     "fs": "^0.0.1-security",
     "gifencoder": "^2.0.1",
