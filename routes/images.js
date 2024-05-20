@@ -57,7 +57,10 @@ api.get("/", async (req, res) => {
 
     res.setHeader("Content-Type", "application/json");
 
-    res.status(200).send(urlGif);
+    res.status(200).send({
+      message: "Imagen generada correctamente",
+      path: urlGif
+    });
 
   } catch (error) {
     res.status(500).send({message: `Error al generar GIF: ${error}`})
