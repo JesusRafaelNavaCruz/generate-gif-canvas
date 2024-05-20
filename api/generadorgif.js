@@ -28,7 +28,7 @@ function generarFotograma(canvas, context, tiempoRestante) {
 
     // Dibujar el texto en el lienzo
     context.font = "bold 60px Arial";
-    context.fillStyle = "#454545";
+    context.fillStyle = "#004A23";
     context.textAlign = "center";
     context.fillText(`${days}`, 20 + 20 + 20, 100);
     context.fillText(`${hours}`, 20 + 135 + 20 + 20, 100);
@@ -37,7 +37,7 @@ function generarFotograma(canvas, context, tiempoRestante) {
 
     // Dibujar labels
     context.font = "16px Arial";
-    context.fillStyle = "#454545";
+    context.fillStyle = "#004A23";
     context.textAlign = "center"
     context.fillText("Días",  20 + 20 + 20, 150);
     context.fillText("Horas", 20 + 135 + 20 + 20, 150);
