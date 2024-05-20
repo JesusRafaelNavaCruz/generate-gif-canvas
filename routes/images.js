@@ -43,8 +43,22 @@ api.get("/", async (req, res) => {
     const countdownTimer = new CountdownTimer(settings);
     const gif = countdownTimer.createGif();
 
-    res.setHeader("Content-Type", "image/gif");
-    res.status(200).send(gif);
+    const uploadParams = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `${req.query.fileName}.gif`,
+      Body: gif,
+      ContentType: "image/gif",
+      ACL: "public-read",
+    };
+
+    const uploadResult = await s3.upload(uploadParams).promise();
+    const urlGif = uploadResult.Location
+    console.log(urlGif);
+
+    res.setHeader("Content-Type", "application/json");
+
+    res.status(200).send(urlGif);
+
   } catch (error) {
     res.status(500).send({message: `Error al generar GIF: ${error}`})
   }
