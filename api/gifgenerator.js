@@ -42,15 +42,20 @@ class CountdownTimer {
         const hours = Math.floor((interval % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((interval % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((interval % (1000 * 60)) / 1000);
+
+        const formattedDays = days.toString().padStart(2, "0")
+        const formattedHours = hours.toString().padStart(2, "0")
+        const formattedMinutes = minutes.toString().padStart(2, "0")
+        const formattedSeconds = seconds.toString().padStart(2, "0")
     
         // Dibujar el texto en el lienzo
         ctx.font = `bold ${this.numberFontSize * 0.25}px Arial`;
         ctx.fillStyle = this.numbersFontColor;
         ctx.textAlign = "center";
-        ctx.fillText(`${days}`, 20 + 20 + 20, this.numbersYoffset);
-        ctx.fillText(`${hours}`, 20 + 135 + 20 + 20, this.numbersYoffset);
-        ctx.fillText(`${minutes}`, 20 + 135 + 20 + 135 + 20 + 20, this.numbersYoffset);
-        ctx.fillText(`${seconds}`, 20 + 135 + 20 + 135 + 20 + 135 + 20 + 20, this.numbersYoffset);
+        ctx.fillText(`${formattedDays}`, 20 + 20 + 20, this.numbersYoffset);
+        ctx.fillText(`${formattedHours}`, 20 + 135 + 20 + 20, this.numbersYoffset);
+        ctx.fillText(`${formattedMinutes}`, 20 + 135 + 20 + 135 + 20 + 20, this.numbersYoffset);
+        ctx.fillText(`${formattedSeconds}`, 20 + 135 + 20 + 135 + 20 + 135 + 20 + 20, this.numbersYoffset);
     
         // Dibujar labels
         ctx.font = `${this.labelFontSize * 0.25}px Arial`;
