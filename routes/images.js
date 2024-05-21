@@ -53,17 +53,11 @@ api.get("/", async (req, res) => {
       ACL: "public-read",
     };
 
-    console.log("Subiendo a S3");
-    const uploadResult = await s3.upload(uploadParams).promise();
-    const urlGif = uploadResult
-    console.log(urlGif);
+    await s3.upload(uploadParams).promise();
 
-    const data = [{
-      fileName: urlGif.key,
-      fileLocation: urlGif.Location,
-    }]
-    res.setHeader("Content-Type", "application/json");
-    res.status(200).send({message: "Images Created!", data: data});
+    res.setHeader("Content-Type", "image/gif");
+    res.status(200).send(gif);
+    
   } catch (error) {
     res.status(500).send({message: `Error al generar GIF: ${error}`})
   }
