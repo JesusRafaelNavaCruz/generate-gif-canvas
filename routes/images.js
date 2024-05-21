@@ -152,14 +152,14 @@ api.get("/v2", async (req, res) => {
   }
 });
 
-const cronExpression = '0 0 */3 * * *';
+const cronExpression = process.env.CRON_INTERVAL;
 
 const cronGenerateGif = async () => {
   try {
 
 
     const options = {
-       url: "http://localhost:5000/api/v1/images?fileName=Custom&expirationDate=2024-05-22T00:00:00&height=150&numbersYoffset=80&labelsYoffset=110&backgroundColor=e5e5e5&labelsFontColor=000000&numbersFontColor=004A23",
+       url: process.env.API_PATH,
        method: "GET",
     }
 
@@ -176,7 +176,7 @@ const cronGenerateGif = async () => {
       };
 
       if (simulatedResponse.status === 200) {
-        console.log("Simulación correcta");
+        console.log("Simulación correcta", simulatedResponse);
       } else {
         return;
       }
