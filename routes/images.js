@@ -152,7 +152,7 @@ api.get("/v2", async (req, res) => {
   }
 });
 
-const cronExpression = '*/5 * * * *';
+const cronExpression = '*/1 * * * *';
 
 const cronGenerateGif = async () => {
   try {
