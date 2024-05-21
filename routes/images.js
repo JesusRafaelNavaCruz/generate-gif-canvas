@@ -4,6 +4,10 @@ const AWS = require("aws-sdk");
 const { generarGIF } = require("../api/generadorgif");
 const redis = require("redis");
 const { promisify } = require("util");
+const request = require('request');
+
+// CRON
+const schedule = require('node-schedule');
 
 const CountdownTimer = require("../api/gifgenerator");
 
@@ -22,7 +26,7 @@ AWS.config.update({
 const s3 = new AWS.S3();
 
 /**
- * POST
+ * GET
  * @return GIF generated
  */
 api.get("/", async (req, res) => {
@@ -35,15 +39,18 @@ api.get("/", async (req, res) => {
       width: parseInt(req.query.width) || 600,
       height: parseInt(req.query.height) || 200,
       backgroundColor: req.query.backgroundColor,
-      fontColor: req.query.fontColor,
+      numbersFontColor: req.query.numbersFontColor,
+      labelsFontColor: req.query.labelsFontColor,
       labelFontSize: parseInt(req.query.labelFontSize),
       numberFontSize: parseInt(req.query.numberFontSize),
+      numbersYoffset: parseInt(req.query.numbersYoffset),
+      labelsYoffset: parseInt(req.query.labelsYoffset),
     };
 
-    console.log(`Creando GIF: ${req.query.fileName}`)
+    console.log("Generando imagen...");
     const countdownTimer = new CountdownTimer(settings);
     const gif = await countdownTimer.createGif();
-    console.log("GIF CREADO");
+    console.log("Imagen generada!");
 
     const uploadParams = {
       Bucket: process.env.AWS_BUCKET_NAME,
@@ -57,7 +64,7 @@ api.get("/", async (req, res) => {
 
     res.setHeader("Content-Type", "image/gif");
     res.status(200).send(gif);
-    
+
   } catch (error) {
     res.status(500).send({message: `Error al generar GIF: ${error}`})
   }
@@ -144,5 +151,54 @@ api.get("/v2", async (req, res) => {
     res.status(500).send("Error al devolver GIF actualizado");
   }
 });
+
+const cronExpression = '0 */3 * * *';
+
+const cronGenerateGif = async () => {
+  try {
+    const req = {
+      query: {
+        fileName: 'HotSale_final',
+        expirationDate: '2024-05-22T00:00:00',
+        height: 150,
+        numbersYoffset: 80,
+        labelsYoffset: 110,
+        backgroundColor: 'e5e5e5',
+        labelsFontColor: '000000',
+        numbersFontColor: '004A23'
+      }
+    }
+
+    const options = {
+       url: "http://localhost:5000/api/v1/images",
+       method: "GET",
+       json: req.query
+    }
+
+    request(options, (error, response, body) => {
+      if (error) {
+        console.log("Error al simular la solicitud: ", error);
+        return;
+      }
+
+      // Simula la respuesta del endpoint
+      const simulatedResponse = {
+        status: response.statusCode,
+        body: body // Puedes modificar el body si necesitas simular un resultado específico
+      };
+
+      if (simulatedResponse) {
+        console.log("Simulación correcta");
+      }
+    })
+
+  } catch(error) {
+    console.error('Error generando y subiendo GIF:', error);
+  }
+}
+
+schedule.scheduleJob(cronExpression, cronGenerateGif)
+
+
 
 module.exports = api;
