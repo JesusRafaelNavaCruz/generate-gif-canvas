@@ -55,13 +55,8 @@ api.get("/", async (req, res) => {
     const urlGif = uploadResult.Location
     console.log(urlGif);
 
-    res.setHeader("Content-Type", "application/json");
-
-    res.status(200).send({
-      message: "Imagen generada correctamente",
-      path: urlGif
-    });
-
+    res.setHeader("Content-Type", "image/gif");
+    res.status(200).send(gif);
   } catch (error) {
     res.status(500).send({message: `Error al generar GIF: ${error}`})
   }
