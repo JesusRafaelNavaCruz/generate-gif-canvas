@@ -152,27 +152,15 @@ api.get("/v2", async (req, res) => {
   }
 });
 
-const cronExpression = '0 */3 * * *';
+const cronExpression = '0 0 */3 * * *';
 
 const cronGenerateGif = async () => {
   try {
-    const req = {
-      query: {
-        fileName: 'HotSale_final',
-        expirationDate: '2024-05-22T00:00:00',
-        height: 150,
-        numbersYoffset: 80,
-        labelsYoffset: 110,
-        backgroundColor: 'e5e5e5',
-        labelsFontColor: '000000',
-        numbersFontColor: '004A23'
-      }
-    }
+
 
     const options = {
-       url: "http://localhost:5000/api/v1/images",
+       url: "http://localhost:5000/api/v1/images?fileName=Custom&expirationDate=2024-05-22T00:00:00&height=150&numbersYoffset=80&labelsYoffset=110&backgroundColor=e5e5e5&labelsFontColor=000000&numbersFontColor=004A23",
        method: "GET",
-       json: req.query
     }
 
     request(options, (error, response, body) => {
@@ -187,8 +175,10 @@ const cronGenerateGif = async () => {
         body: body // Puedes modificar el body si necesitas simular un resultado específico
       };
 
-      if (simulatedResponse) {
+      if (simulatedResponse.status === 200) {
         console.log("Simulación correcta");
+      } else {
+        return;
       }
     })
 
