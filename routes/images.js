@@ -40,8 +40,10 @@ api.get("/", async (req, res) => {
       numberFontSize: parseInt(req.query.numberFontSize),
     };
 
+    console.log(`Creando GIF: ${req.query.fileName}`)
     const countdownTimer = new CountdownTimer(settings);
-    const gif = countdownTimer.createGif();
+    const gif = await countdownTimer.createGif();
+    console.log("GIF CREADO");
 
     const uploadParams = {
       Bucket: process.env.AWS_BUCKET_NAME,
@@ -51,12 +53,17 @@ api.get("/", async (req, res) => {
       ACL: "public-read",
     };
 
+    console.log("Subiendo a S3");
     const uploadResult = await s3.upload(uploadParams).promise();
-    const urlGif = uploadResult.Location
+    const urlGif = uploadResult
     console.log(urlGif);
 
-    res.setHeader("Content-Type", "image/gif");
-    res.status(200).send(gif);
+    const data = [{
+      fileName: urlGif.key,
+      fileLocation: urlGif.Location,
+    }]
+    res.setHeader("Content-Type", "application/json");
+    res.status(200).send({message: "Images Created!", data: data});
   } catch (error) {
     res.status(500).send({message: `Error al generar GIF: ${error}`})
   }
