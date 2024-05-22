@@ -82,9 +82,6 @@ class CountdownTimer {
     }
 
     createGif() {
-        console.log("Target Moment", this.targetDateTimeMoment);
-        console.log("TargetDateTime", this.targetDateTime)
-        console.log("Now Moment", this.nowMoment);
         for (let i = 0; i < this.seconds; i++) {
             this.drawFrame();
         }

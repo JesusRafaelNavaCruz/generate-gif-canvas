@@ -5,6 +5,8 @@ const { generarGIF } = require("../api/generadorgif");
 const redis = require("redis");
 const { promisify } = require("util");
 const request = require('request');
+const fs = require("fs")
+const path = require("path")
 
 // CRON
 const schedule = require('node-schedule');
@@ -27,7 +29,7 @@ const s3 = new AWS.S3();
 
 /**
  * GET
- * @return GIF generated
+ * Genera GIF con los parametros
  */
 api.get("/", async (req, res) => {
   try {
@@ -47,25 +49,27 @@ api.get("/", async (req, res) => {
       labelsYoffset: parseInt(req.query.labelsYoffset),
     };
 
-    console.log("Generando imagen...");
     const countdownTimer = new CountdownTimer(settings);
     const gif = await countdownTimer.createGif();
-    if (gif) {
-        console.log("Imagen generada");
+
+    
+    const filePath = path.join(__dirname, "gifs", `${settings.fileName}.gif`);
+    const settingsFilePath = path.join(__dirname, "gifs", `${settings.fileName}.json`);
+
+    try {
+      await fs.promises.writeFile(filePath, gif)
+      await fs.promises.writeFile(settingsFilePath, JSON.stringify(settings, null, 2));
+
+      console.log(`Gif Guardado correctamente: ${filePath}`);
+      console.log(`Configuración Guardado correctamente: ${settingsFilePath}`);
+      res.status(200).json({
+        message: "GIF generado y guardado correctamente",
+        apiPath: `${process.env.API_PATH}/${settings.fileName}`,
+        path: filePath,
+      })
+    }catch (e) {
+      res.status(500).send({message: `Error al guardar GIF: ${e}`});
     }
-
-    const uploadParams = {
-      Bucket: process.env.AWS_BUCKET_NAME,
-      Key: `${req.query.fileName}.gif`,
-      Body: gif,
-      ContentType: "image/gif",
-      ACL: "public-read",
-    };
-
-    await s3.upload(uploadParams).promise();
-
-    res.setHeader("Content-Type", "image/gif");
-    res.status(200).send(gif);
 
   } catch (error) {
     res.status(500).send({message: `Error al generar GIF: ${error}`})
@@ -74,7 +78,7 @@ api.get("/", async (req, res) => {
 
 /**
  * GET
- * @return generated GIF
+ * generated GIF OLD
  */
 api.get("/generar-gif", async (req, res) => {
   try {
@@ -109,51 +113,51 @@ api.get("/generar-gif", async (req, res) => {
 
 /**
  * GET
- * @return updated GIF
+ * Actualiza GIF
  */
-api.get("/v2", async (req, res) => {
+api.get("/:id", async (req, res) => {
   try {
-    const id = req.query.name;
-    const target_date_time =
-      req.query.expirationDate || now.setDate(now.getDate() + 1);
-    const nameImage = `${req.query.name}.gif` || "new_image.gif";
-    const now = new Date();
-    const cacheKey = `countdown-last-generated-${id}`;
+    const id = req.params.id;
 
-    // Obtener la última fecha de generacion del GIF desde Redis
-    const lastGenerated = await getAsync(cacheKey);
-    const isOutDated = !lastGenerated || now - lastGenerated > 60000;
+    const filePath = path.join(__dirname, "gifs", `${id}.gif`);
+    const settingsFilePath = path.join(__dirname, "gifs", `${id}.json`);
 
-    if (isOutDated) {
-      const gifBuffer = await generarGIF(target_date_time);
-      await setAsync(cacheKey, now);
-
-      const uploadParams = {
-        Bucket: process.env.AWS_BUCKET_NAME,
-        Key: nameImage,
-        Body: gifBuffer,
-        ContentType: "image/gif",
-        ACL: "public-read",
-      };
-
-      const uploadResult = await s3.upload(uploadParams).promise();
-
-      const gifUrl = uploadResult.Location;
-      console.log(gifUrl);
-
-      res.set("Content-Type", "image/gif");
+    if (!fs.existsSync(filePath)) {
+      res.status(404).send({
+        message: "Imagen no encontrada",
+      });
     }
 
-    const url = `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${nameImage}`;
-    console.log(url);
+    if(!fs.existsSync(settingsFilePath)) {
+      return res.status(404).send({
+        message: "Configuración no encontrada"
+      })
+    }
 
-    res.redirect(url);
+    const settingsData = await fs.promises.readFile(settingsFilePath);
+    const settings = JSON.parse(settingsData);
+
+    const countdownTimer = new CountdownTimer(settings)
+    const newGif = countdownTimer.createGif();
+
+    await fs.promises.writeFile(filePath, newGif);
+
+    const gifBuffer = await fs.promises.readFile(filePath);
+
+    res.set("Content-Type", "image/gif")
+    res.send(gifBuffer);
+
   } catch (err) {
     console.log(err);
-    res.status(500).send("Error al devolver GIF actualizado");
+    res.status(500).send({
+      message: `Error al devolver GIF actualizado ${err}`
+    });
   }
 });
 
+
+
+// CRON JOB
 const cronExpression = '*/1 * * * *';
 
 const cronGenerateGif = async () => {
@@ -187,7 +191,7 @@ const cronGenerateGif = async () => {
   }
 }
 
-schedule.scheduleJob(cronExpression, cronGenerateGif)
+//schedule.scheduleJob(cronExpression, cronGenerateGif)
 
 
 
