@@ -4,12 +4,12 @@ const AWS = require("aws-sdk");
 const { generarGIF } = require("../api/generadorgif");
 const redis = require("redis");
 const { promisify } = require("util");
-const request = require('request');
-const fs = require("fs")
-const path = require("path")
+const request = require("request");
+const fs = require("fs");
+const path = require("path");
 
 // CRON
-const schedule = require('node-schedule');
+const schedule = require("node-schedule");
 
 const CountdownTimer = require("../api/gifgenerator");
 
@@ -52,27 +52,30 @@ api.get("/", async (req, res) => {
     const countdownTimer = new CountdownTimer(settings);
     const gif = await countdownTimer.createGif();
 
-    
-    const filePath = path.join(__dirname, "gifs", `${settings.fileName}.gif`);
-    const settingsFilePath = path.join(__dirname, "gifs", `${settings.fileName}.json`);
+    const gifParams = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `${req.query.fileName}.gif`,
+      Body: gif,
+      ContentType: "image/gif",
+      ACL: "public-read",
+    };
 
-    try {
-      await fs.promises.writeFile(filePath, gif)
-      await fs.promises.writeFile(settingsFilePath, JSON.stringify(settings, null, 2));
+    const settingParams = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `${req.query.fileName}.json`,
+      Body: JSON.stringify(settings, null, 2),
+      ContentType: "application/json",
+      ACL: "public-read",
+    };
 
-      console.log(`Gif Guardado correctamente: ${filePath}`);
-      console.log(`Configuración Guardado correctamente: ${settingsFilePath}`);
-      res.status(200).json({
-        message: "GIF generado y guardado correctamente",
-        apiPath: `${process.env.API_PATH}/${settings.fileName}`,
-        path: filePath,
-      })
-    }catch (e) {
-      res.status(500).send({message: `Error al guardar GIF: ${e}`});
-    }
+    await s3.upload(gifParams).promise();
+    await s3.upload(settingParams).promise();
 
+    res.status(200).send({
+      message: "Archivos cargados",
+    });
   } catch (error) {
-    res.status(500).send({message: `Error al generar GIF: ${error}`})
+    res.status(500).send({ message: `Error al generar GIF: ${error}` });
   }
 });
 
@@ -119,53 +122,59 @@ api.get("/:id", async (req, res) => {
   try {
     const id = req.params.id;
 
-    const filePath = path.join(__dirname, "gifs", `${id}.gif`);
-    const settingsFilePath = path.join(__dirname, "gifs", `${id}.json`);
+    const gifParams = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `${id}.gif`,
+    };
 
-    if (!fs.existsSync(filePath)) {
+    const settingParams = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `${id}.json`,
+    };
+
+    try {
+      const settingsData = await s3.getObject(settingParams).promise();
+      const settings = JSON.parse(settingsData.Body.toString());
+
+      const countdownTimer = new CountdownTimer(settings);
+      const newGif = countdownTimer.createGif();
+
+      const putGifParams = {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: `${id}.gif`,
+        Body: newGif,
+        ContentType: "image/gif",
+        ACL: "public-read",
+      };
+
+      await s3.upload(putGifParams).promise();
+
+      const updatedGif = await s3.getObject(gifParams).promise();
+
+      res.set("Content-Type", "image/gif");
+      res.send(updatedGif.Body);
+    } catch (err) {
       res.status(404).send({
-        message: "Imagen no encontrada",
+        message: `imagen no encontrada ${err}`,
       });
     }
-
-    if(!fs.existsSync(settingsFilePath)) {
-      return res.status(404).send({
-        message: "Configuración no encontrada"
-      })
-    }
-
-    const settingsData = await fs.promises.readFile(settingsFilePath);
-    const settings = JSON.parse(settingsData);
-
-    const countdownTimer = new CountdownTimer(settings)
-    const newGif = countdownTimer.createGif();
-
-    await fs.promises.writeFile(filePath, newGif);
-
-    const gifBuffer = await fs.promises.readFile(filePath);
-
-    res.set("Content-Type", "image/gif")
-    res.send(gifBuffer);
-
   } catch (err) {
     console.log(err);
     res.status(500).send({
-      message: `Error al devolver GIF actualizado ${err}`
+      message: `Error al devolver GIF actualizado ${err}`,
     });
   }
 });
 
-
-
 // CRON JOB
-const cronExpression = '*/1 * * * *';
+const cronExpression = "*/1 * * * *";
 
 const cronGenerateGif = async () => {
   try {
     const options = {
-       url: "http://localhost:5000/api/v1/images?fileName=HotSale2024_2&expirationDate=2024-05-23T23:00:00&height=150&numbersYoffset=80&labelsYoffset=110&backgroundColor=f5f5f5&labelsFontColor=000000&numbersFontColor=004A23&labelFontSize=52",
-       method: "GET",
-    }
+      url: "http://localhost:5000/api/v1/images?fileName=HotSale2024_2&expirationDate=2024-05-23T23:00:00&height=150&numbersYoffset=80&labelsYoffset=110&backgroundColor=f5f5f5&labelsFontColor=000000&numbersFontColor=004A23&labelFontSize=52",
+      method: "GET",
+    };
 
     request(options, (error, response, body) => {
       if (error) {
@@ -176,7 +185,7 @@ const cronGenerateGif = async () => {
       // Simula la respuesta del endpoint
       const simulatedResponse = {
         status: response.statusCode,
-        body: body // Puedes modificar el body si necesitas simular un resultado específico
+        body: body, // Puedes modificar el body si necesitas simular un resultado específico
       };
 
       if (simulatedResponse.status === 200) {
@@ -184,15 +193,12 @@ const cronGenerateGif = async () => {
       } else {
         return;
       }
-    })
-
-  } catch(error) {
-    console.error('Error generando y subiendo GIF:', error);
+    });
+  } catch (error) {
+    console.error("Error generando y subiendo GIF:", error);
   }
-}
+};
 
 //schedule.scheduleJob(cronExpression, cronGenerateGif)
-
-
 
 module.exports = api;
