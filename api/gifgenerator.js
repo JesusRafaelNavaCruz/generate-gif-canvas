@@ -1,5 +1,7 @@
-const { createCanvas } = require("canvas")
+const { createCanvas, registerFont } = require("canvas")
 const GIFEncoder = require("gifencoder");
+const moment = require('moment-timezone');
+const fontPath = "./fonts/Poppins-SemiBold.ttf";
 
 class CountdownTimer {
     constructor(settings) {
@@ -25,9 +27,14 @@ class CountdownTimer {
         this.encoder.setDelay(1000);
         this.encoder.setQuality(10);
 
+        this.targetTimeZone = "America/Mexico_City"
+        this.targetDateTimeMoment = moment.utc(this.targetDateTime).tz(this.targetTimeZone, true);
+        this.nowMoment = moment.tz(this.targetTimeZone);
+
     }
 
     drawFrame() {
+        registerFont(fontPath, {family: "Poppins"});
         const canvas = createCanvas(this.width, this.height);
         const ctx = canvas.getContext("2d");
 
@@ -36,7 +43,8 @@ class CountdownTimer {
         ctx.fillRect(0, 0, this.width, this.height);
 
         // Calcular tiempo restante
-        const interval = Math.max(0, this.targetDateTime.getTime() - this.now.getTime());
+        //const interval = Math.max(0, this.targetDateTimeUTC.getTime() - this.nowUTC.getTime());
+        const interval = Math.max(0, this.targetDateTimeMoment.valueOf() - this.nowMoment.valueOf())
 
         const days = Math.floor(interval / (1000 * 60 * 60 * 24));
         const hours = Math.floor((interval % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -49,30 +57,34 @@ class CountdownTimer {
         const formattedSeconds = seconds.toString().padStart(2, "0")
     
         // Dibujar el texto en el lienzo
-        ctx.font = `bold ${this.numberFontSize * 0.25}px Arial`;
+        ctx.font = `bold ${this.numberFontSize * 0.25}px Poppins, Arial, sans-serif`;
         ctx.fillStyle = this.numbersFontColor;
         ctx.textAlign = "center";
-        ctx.fillText(`${formattedDays}`, 20 + 20 + 20, this.numbersYoffset);
-        ctx.fillText(`${formattedHours}`, 20 + 135 + 20 + 20, this.numbersYoffset);
-        ctx.fillText(`${formattedMinutes}`, 20 + 135 + 20 + 135 + 20 + 20, this.numbersYoffset);
-        ctx.fillText(`${formattedSeconds}`, 20 + 135 + 20 + 135 + 20 + 135 + 20 + 20, this.numbersYoffset);
+        ctx.fillText(`${formattedDays}`, 20 + 20 + 20 + 20, this.numbersYoffset);
+        ctx.fillText(`${formattedHours}`, 20 + 135 + 20 + 20 + 20, this.numbersYoffset);
+        ctx.fillText(`${formattedMinutes}`, 20 + 135 + 20 + 135 + 20 + 20 + 20, this.numbersYoffset);
+        ctx.fillText(`${formattedSeconds}`, 20 + 135 + 20 + 135 + 20 + 135 + 20 + 20 + 20, this.numbersYoffset);
     
         // Dibujar labels
-        ctx.font = `${this.labelFontSize * 0.25}px Arial`;
+        ctx.font = `${this.labelFontSize * 0.25}px Poppins, Arial, sans-serif`;
         ctx.fillStyle = this.labelsFontColor;
         ctx.textAlign = "center"
-        ctx.fillText("Días",  20 + 20 + 20, this.labelsYoffset);
-        ctx.fillText("Horas", 20 + 135 + 20 + 20, this.labelsYoffset);
-        ctx.fillText("Minutos", 20 + 135 + 20 + 135 + 20 + 20, this.labelsYoffset);
-        ctx.fillText("Segundos", 20 + 135 + 20 + 135 + 20 + 135 + 20 + 20, this.labelsYoffset);
+        ctx.fillText("Día",  20 + 20 + 20 + 20, this.labelsYoffset);
+        ctx.fillText("Horas", 20 + 135 + 20 + 20 + 20, this.labelsYoffset);
+        ctx.fillText("Minutos", 20 + 135 + 20 + 135 + 20 + 20 + 20, this.labelsYoffset);
+        ctx.fillText("Segundos", 20 + 135 + 20 + 135 + 20 + 135 + 20 + 20 + 20, this.labelsYoffset);
         
         this.encoder.addFrame(ctx);
 
-        this.now = new Date(this.now.getTime() + 1000);
+        //this.nowUTC = new Date(this.nowUTC.getTime() + 1000);
+        this.nowMoment.add(1, "seconds")
 
     }
 
     createGif() {
+        console.log("Target Moment", this.targetDateTimeMoment);
+        console.log("TargetDateTime", this.targetDateTime)
+        console.log("Now Moment", this.nowMoment);
         for (let i = 0; i < this.seconds; i++) {
             this.drawFrame();
         }

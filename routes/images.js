@@ -50,7 +50,9 @@ api.get("/", async (req, res) => {
     console.log("Generando imagen...");
     const countdownTimer = new CountdownTimer(settings);
     const gif = await countdownTimer.createGif();
-    console.log("Imagen generada!");
+    if (gif) {
+        console.log("Imagen generada");
+    }
 
     const uploadParams = {
       Bucket: process.env.AWS_BUCKET_NAME,
@@ -157,7 +159,7 @@ const cronExpression = '*/1 * * * *';
 const cronGenerateGif = async () => {
   try {
     const options = {
-       url: "http://localhost:5000/api/v1/images?fileName=HotSale2024&expirationDate=2024-05-23T00:00:00&height=150&numbersYoffset=80&labelsYoffset=110&backgroundColor=e5e5e5&labelsFontColor=000000&numbersFontColor=004A23",
+       url: "http://localhost:5000/api/v1/images?fileName=HotSale2024_2&expirationDate=2024-05-23T23:00:00&height=150&numbersYoffset=80&labelsYoffset=110&backgroundColor=f5f5f5&labelsFontColor=000000&numbersFontColor=004A23&labelFontSize=52",
        method: "GET",
     }
 
